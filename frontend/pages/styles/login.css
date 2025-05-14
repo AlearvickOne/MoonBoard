@@ -1,0 +1,76 @@
+@charset "UTF-8";
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+input {
+  border-width: 0 0 1px 0 !important;
+  padding: 5px !important;
+  outline: none !important;
+  width: 100% !important;
+  background: none !important;
+}
+input:focus {
+  border-color: #51847f !important;
+}
+
+body {
+  background: linear-gradient(120deg, #f8f5f0, #f1e6d3, #e0d2c1);
+  min-height: 100vh;
+}
+
+.wrapper-parent-element {
+  border-radius: 15px;
+  background: #fffefc;
+  padding: 20px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 300px;
+  width: 100%;
+  position: absolute;
+  top: 50%;
+  left: 20rem;
+  transform: translateY(-50%);
+}
+.login-form .login-title-form {
+  font-size: 24px;
+  text-align: left;
+  padding-bottom: 10px;
+  font-weight: 500;
+}
+.login-form .login-inputs-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.login-form .login-button-form {
+  margin: 0 auto;
+  width: 100%;
+  border-radius: 10px;
+  background: #51847f;
+  color: #fff;
+  cursor: pointer;
+  border: none;
+  padding: 9px;
+}
+@media (max-width: 768px) {
+  .login-form {
+    position: absolute;
+    transform: translateY(-50%);
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    max-width: 90%;
+  }
+  .login-form .login-title-form {
+    font-size: 25px; /* Уменьшение размера шрифта */
+  }
+}
+
+/*# sourceMappingURL=login.css.map */
