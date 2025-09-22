@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Автокликер с магазином и скинами + бонус и фон</title>
+<style>
+  /* --- Фон с небом --- */
+  body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow-x: hidden;
+    font-family: Arial, sans-serif;
+    color: #eee;
+    position: relative;
+    background: #121212;
+  }
+
+  #backgroundContainer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    z-index: 0;
+    filter: blur(5px);
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  #backgroundContainer img#sky {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    user-select: none;
+  }
+
+  /* Контейнер для падающих монет */
+  #coinFallContainer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    overflow: visible;
+    z-index: 1;
+  }
+
+  /* Стили монет */
+  .fallingCoin {
+    position: absolute;
+    top: -50px;
+    width: 24px;
+    height: 24px;
+    user-select: none;
+    pointer-events: none;
+    animation-name: fall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  /* Анимация падения монеты */
+  @keyframes fall {
+    0% {
+      transform: translateY(0) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(110vh) rotate(360deg);
+      opacity: 0;
+    }
+  }
+
+  /* --- Интерфейс поверх --- */
+  #appContainer {
+    position: relative;
+    z-index: 10;
+    max-width: 700px;
+    margin: auto;
+    padding: 20px;
+    text-align: center;
+  }
+
+  #clicker {
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    border: 4px solid #eee;
+    background: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 48px;
+    cursor: pointer;
+    margin: 20px auto;
+    user-select: none;
+    transition: background 0.3s, box-shadow 0.3s;
+    position: relative;
+    z-index: 10;
+  }
+  #clicker:hover {
+    background: #555;
+    box-shadow: 0 0 10px #ffcc00;
+  }
+  /* Анимация клика */
+  @keyframes clickAnim {
+    0% {
+      transform: scale(1);
+      box-shadow: 0 0 0px #ffcc00;
+    }
+    50% {
+      transform: scale(0.85);
+      box-shadow: 0 0 15px #ffcc00;
+    }
+    100% {
+      transform: scale(1);
+      box-shadow: 0 0 0px #ffcc00;
+    }
+  }
+  #clicker.animate {
+    animation: clickAnim 0.3s ease;
+  }
+
+  #score {
+    font-size: 24px;
+    margin: 10px 0;
+    position: relative;
+    z-index: 10;
+  }
+  #autoclickerToggle {
+    margin: 10px 0 20px 0;
+    font-size: 16px;
+    position: relative;
+    z-index: 10;
+  }
+  #speedControl {
+    width: 200px;
+    position: relative;
+    z-index: 10;
+  }
+  #clickSpeedDisplay {
+    position: relative;
+    z-index: 10;
+  }
+  #upgrades {
+    margin-top: 20px;
+    position: relative;
+    z-index: 10;
+  }
+  button {
+    background: #222;
+    color: #eee;
+    border: none;
+    padding: 8px 16px;
+    margin-top: 10px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.3s;
+    font-size: 12px;
+  }
+  button:hover {
+    background: #444;
+  }
+  #skins {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    max-width: 600px;
+    margin: 20px auto 0 auto;
+    position: relative;
+    z-index: 10;
+  }
+  .skin {
+    border: 2px solid #444;
+    border-radius: 12px;
+    width: 80px;
+    height: 80px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+    transition: border-color 0.3s;
+    flex-direction: column;
+    background: #222;
+  }
+  .skin.selected {
+    border-color: #ffcc00;
+    box-shadow: 0 0 10px #ffcc00;
+  }
+  /* Скины стили */
+  .skin.cyberpunk {
+    background: linear-gradient(135deg, #0ff, #f0f);
+    box-shadow: 0 0 10px #0ff;
+    color: #000;
+    font-weight: bold;
+  }
+  .skin.casino {
+    background: #b22222;
+    box-shadow: 0 0 10px #ff0000;
+    color: #fff;
+    font-weight: bold;
+  }
+  .skin.steam {
+    background: #2a475e;
+    box-shadow: 0 0 10px #5a9bd4;
+    color: #d0e7ff;
+    font-weight: bold;
+  }
+
+  /* Бонус кружок */
+  #bonusCircle {
+    position: fixed;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: gold;
+    color: #333;
+    font-weight: bold;
+    font-size: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    box-shadow: 0 0 15px 5px gold;
+    z-index: 1000;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+      box-shadow: 0 0 15px 5px gold;
+    }
+    50% {
+      transform: scale(1.1);
+      box-shadow: 0 0 25px 10px gold;
+    }
+    100% {
+      transform: scale(1);
+      box-shadow: 0 0 15px 5px gold;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- Фон -->
+<div id="backgroundContainer">
+  <img id="sky" src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=80" alt="Ночное небо" />
+</div>
+
+<!-- Падающие монеты -->
+<div id="coinFallContainer"></div>
+
+<!-- Основной интерфейс -->
+<div id="appContainer">
+  <h1>Автокликер</h1>
+
+  <div id="clicker" title="Нажми или включи автокликер">💰</div>
+
+  <div id="score">Баланс: 0</div>
+
+  <label>
+    <input type="checkbox" id="autoclickerToggle" />
+    Включить автокликер
+  </label>
+
+  <div>
+    Скорость кликов в секунду: <span id="clickSpeedDisplay">0.0</span>
+  </div>
+  <input type="range" id="speedControl" min="0" max="10" step="0.1" value="0" disabled />
+
+  <div id="upgrades">
+    <button id="buySpeed">Купить улучшение скорости (+0.1 клик/сек) — Цена: 10</button>
+  </div>
+
+  <h2>Магазин скинов</h2>
+  <div id="skins"></div>
+</div>
+
+<!-- Бонус кружок будет добавляться динамически -->
+
+<script>
+  // Иконки для скинов
+  const skinIcons = {
+    base1: "💰",
+    base2: "🪙",
+    base3: "💵",
+    cyberpunk: "🌐",
+    casino: "🎰",
+    steam: "⚙️",
+  };
+
+  const skinsData = [
+    { id: "base1", name: "Базовый 1", icon: skinIcons.base1, price: 0 },
+    { id: "base2", name: "Базовый 2", icon: skinIcons.base2, price: 5 },
+    { id: "base3", name: "Базовый 3", icon: skinIcons.base3, price: 5 },
+    { id: "cyberpunk", name: "Киберпанк", icon: skinIcons.cyberpunk, price: 15, style: "cyberpunk" },
+    { id: "casino", name: "Казино", icon: skinIcons.casino, price: 20, style: "casino" },
+    { id: "steam", name: "Стим", icon: skinIcons.steam, price: 25, style: "steam" },
+  ];
+
+  let score = 0;
+  let clickSpeed = 0;
+  let autoclickerOn = false;
+  let ownedSkins = new Set(["base1"]);
+  let currentSkin = "base1";
+  let speedUpgradeCost = 10;
+
+  const scoreEl = document.getElementById("score");
+  const clickerEl = document.getElementById("clicker");
+  const autoclickerToggle = document.getElementById("autoclickerToggle");
+  const speedControl = document.getElementById("speedControl");
+  const clickSpeedDisplay = document.getElementById("clickSpeedDisplay");
+  const buySpeedBtn = document.getElementById("buySpeed");
+  const skinsContainer = document.getElementById("skins");
+
+  function updateUI() {
+    scoreEl.textContent = `Баланс: ${score.toFixed(1)}`;
+    clickSpeedDisplay.textContent = clickSpeed.toFixed(1);
+    speedControl.value = clickSpeed;
+    speedControl.disabled = !autoclickerOn;
+    buySpeedBtn.textContent = `Купить улучшение скорости (+0.1 клик/сек) — Цена: ${speedUpgradeCost}`;
+
+    // Обновляем иконку скина и стиль
+    clickerEl.textContent = skinIcons[currentSkin];
+    clickerEl.className = "";
+    const skinObj = skinsData.find(s => s.id === currentSkin);
+    if (skinObj && skinObj.style) {
+      clickerEl.classList.add(skinObj.style);
+    }
+
+    // Обновляем скины в магазине
+    Array.from(skinsContainer.children).forEach(child => {
+      const skinId = child.dataset.id;
+      if (ownedSkins.has(skinId)) {
+        child.classList.add("owned");
+        child.style.borderColor = (skinId === currentSkin) ? "#ffcc00" : "#444";
+        child.classList.toggle("selected", skinId === currentSkin);
+        child.querySelector("button").style.display = "none";
+      } else {
+        child.classList.remove("owned", "selected");
+        child.style.borderColor = "#444";
+        child.querySelector("button").style.display = "inline-block";
+      }
+    });
+  }
+
+  function addPoints(amount) {
+    score += amount;
+    updateUI();
+  }
+
+  clickerEl.addEventListener("pointerdown", () => {
+    addPoints(1);
+
+    // Запускаем анимацию
+    clickerEl.classList.remove("animate");
+    void clickerEl.offsetWidth;
+    clickerEl.classList.add("animate");
+  });
+
+  autoclickerToggle.addEventListener("change", () => {
+    autoclickerOn = autoclickerToggle.checked;
+    speedControl.disabled = !autoclickerOn;
+  });
+
+  speedControl.addEventListener("input", () => {
+    clickSpeed = parseFloat(speedControl.value);
+    updateUI();
+  });
+
+  buySpeedBtn.addEventListener("pointerdown", () => {
+    if (score >= speedUpgradeCost) {
+      score -= speedUpgradeCost;
+      clickSpeed += 0.1;
+      speedUpgradeCost = Math.floor(speedUpgradeCost * 1.5);
+      updateUI();
+    } else {
+      alert("Недостаточно средств!");
+    }
+  });
+
+  // Автокликер таймер (каждые 100ms начисляем долю кликов)
+  setInterval(() => {
+    if (autoclickerOn && clickSpeed > 0) {
+      addPoints(clickSpeed / 10);
+    }
+  }, 100);
+
+  // Магазин скинов
+  function renderSkins() {
+    skinsContainer.innerHTML = "";
+    skinsData.forEach(skin => {
+      const div = document.createElement("div");
+      div.classList.add("skin");
+      if (skin.style) div.classList.add(skin.style);
+      div.dataset.id = skin.id;
+      div.title = `${skin.name}\nЦена: ${skin.price}`;
+      
+      const iconSpan = document.createElement("span");
+      iconSpan.textContent = skin.icon;
+      iconSpan.style.fontSize = "36px";
+      div.appendChild(iconSpan);
+
+      const btn = document.createElement("button");
+      btn.textContent = "Купить";
+      div.appendChild(btn);
+
+      btn.addEventListener("pointerdown", (e) => {
+        e.stopPropagation();
+        if (score >= skin.price) {
+          score -= skin.price;
+          ownedSkins.add(skin.id);
+          updateUI();
+        } else {
+          alert("Недостаточно средств!");
+        }
+      });
+
+      div.addEventListener("pointerdown", () => {
+        if (ownedSkins.has(skin.id)) {
+          currentSkin = skin.id;
+          updateUI();
+        } else {
+          alert("Сначала купите этот скин!");
+        }
+      });
+
+      skinsContainer.appendChild(div);
+    });
+  }
+
+  renderSkins();
+  updateUI();
+
+  // --- Бонус +10 монет ---
+
+  function createBonusCircle() {
+    const bonus = document.createElement("div");
+    bonus.id = "bonusCircle";
+    bonus.textContent = "+10";
+
+    const padding = 70;
+    const maxX = window.innerWidth - padding;
+    const maxY = window.innerHeight - padding;
+    const posX = Math.floor(Math.random() * maxX);
+    const posY = Math.floor(Math.random() * maxY);
+
+    bonus.style.left = posX + "px";
+    bonus.style.top = posY + "px";
+
+    document.body.appendChild(bonus);
+
+    bonus.addEventListener("pointerdown", () => {
+      score += 10;
+      updateUI();
+      bonus.remove();
+    });
+
+    setTimeout(() => {
+      if (document.body.contains(bonus)) {
+        bonus.remove();
+      }
+    }, 15000);
+  }
+
+  setInterval(() => {
+    createBonusCircle();
+  }, 60000);
+
+  createBonusCircle();
+
+  // --- Анимация падающих монет ---
+
+  const coinFallContainer = document.getElementById("coinFallContainer");
+
+  // Создаем одну падающую монету
+  function createFallingCoin() {
+    const coin = document.createElement("div");
+    coin.classList.add("fallingCoin");
+    coin.textContent = "🪙"; // можно заменить на любую монету
+    coin.style.left = Math.random() * window.innerWidth + "px";
+    coin.style.animationDuration = (4 + Math.random() * 4) + "s";
+    coin.style.fontSize = (16 + Math.random() * 16) + "px";
+    coin.style.animationDelay = Math.random() * 5 + "s";
+
+    coinFallContainer.appendChild(coin);
+
+    // Удаляем монету после окончания анимации
+    coin.addEventListener("animationend", () => {
+      coin.remove();
+      // Создаем новую для непрерывности
+      createFallingCoin();
+    });
+  }
+
+  // Создаем сразу 20 монет
+  for (let i = 0; i < 20; i++) {
+    createFallingCoin();
+  }
+
+</script>
+
+</body>
+</html>
